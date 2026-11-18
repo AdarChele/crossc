@@ -47,6 +47,8 @@ jobs:
           .github/scripts/discover.sh
 
       - name: "\U0001F528 Build each binary"
+        env:
+          DISCOVERED_FILES: "${{ steps.discover.outputs.files }}"
         run: |
           chmod +x .github/scripts/build.sh
           .github/scripts/build.sh
