@@ -59,9 +59,12 @@ jobs:
           .github/scripts/pack.sh
 
       - name: "\U0001F3F7\uFE0F Create Release"
+        env:
+          RELEASE_ARCHIVE: "${{ steps.pack.outputs.archive }}"
+          GH_TOKEN: "${{ github.token }}"
         run: |
           chmod +x .github/scripts/release.sh
-          .github/scripts/release.sh "${{ steps.pack.outputs.archive }}"
+          .github/scripts/release.sh
 
       - name: "\U0001F4A5 Purge sources"
         if: always()

@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ARCHIVE="${1:-}"
-if [[ -z "$ARCHIVE" || ! -f "$ARCHIVE" ]]; then
-  echo "::error::Archive not found: $ARCHIVE"
+if [[ -z "$RELEASE_ARCHIVE" || ! -f "$RELEASE_ARCHIVE" ]]; then
+  echo "::error::RELEASE_ARCHIVE not found: $RELEASE_ARCHIVE"
   exit 1
 fi
 
@@ -14,6 +13,6 @@ gh release create "${GITHUB_REF_NAME}" \
 - \`-Os -flto=auto -static -pie\` + \`--strip-all\` + \`--gc-sections\`
 - Compressed: \`tar --zstd -9\`
 - Sources purged post-build" \
-  "$ARCHIVE" \
+  "$RELEASE_ARCHIVE" \
   --latest \
   --repo "$GITHUB_REPOSITORY"
