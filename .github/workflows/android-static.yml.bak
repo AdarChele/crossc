@@ -1,4 +1,4 @@
-name: Android Static arm64 — Build, Pack, Release, Purge
+name: "Android Static arm64 \u2014 Build, Pack, Release, Purge"
 
 on:
   push:
@@ -14,38 +14,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      NDK_VERSION: r27c
-      API_LEVEL: 30
-      TARGET: aarch64-linux-android${{ env.API_LEVEL }}
-      SRC_DIR: src
-      OUT_DIR: out
-      RELEASE_NAME: android-arm64-api30-static
+      NDK_VERSION: "r27c"
+      API_LEVEL: "30"
+      TARGET: "aarch64-linux-android30"   # hardcoded, no ${{ }} in env block
+      SRC_DIR: "src"
+      OUT_DIR: "out"
+      RELEASE_NAME: "android-arm64-api30-static"
 
     steps:
-      - name: 📥 Checkout
+      - name: "\U0001F4E5 Checkout"
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   
+          fetch-depth: 0
 
-      - name: 🤖 Setup Android NDK
+      - name: "\U0001F916 Setup Android NDK"
         uses: android-actions/setup-android@v3
         with:
-          ndk-version: ${{ env.NDK_VERSION }}
+          ndk-version: "${{ env.NDK_VERSION }}"
 
-      - name: 🔍 Discover C sources
+      - name: "\U0001F50D Discover C sources"
         id: discover
         run: |
-          mkdir -p ${{ env.OUT_DIR }}
-          mapfile -t files < <(find ${{ env.SRC_DIR }} -type f -name '*.c' | sort)
+          mkdir -p "${{ env.OUT_DIR }}"
+          mapfile -t files < <(find "${{ env.SRC_DIR }}" -type f -name '*.c' | sort)
           if [[ ${#files[@]} -eq 0 ]]; then
             echo "::error::No .c files found in ${{ env.SRC_DIR }}/"
             exit 1
           fi
-          printf 'files=%s\n' "$(IFS=,; echo "${files[*]}")" >> $GITHUB_OUTPUT
+          printf 'files=%s\n' "$(IFS=,; echo "${files[*]}")" >> "$GITHUB_OUTPUT"
           echo "Found ${#files[@]} source(s):"
           printf '  %s\n' "${files[@]}"
 
-      - name: 🔨 Compile each source (static, max opt, stripped)
+      - name: "\U0001F528 Compile each source (static, max opt, stripped)"
         run: |
           IFS=',' read -ra SRC_FILES <<< "${{ steps.discover.outputs.files }}"
           for src in "${SRC_FILES[@]}"; do
@@ -62,40 +62,40 @@ jobs:
               -DCMAKE_C_SOURCE_FILE="$src" \
               -DCMAKE_PROJECT_NAME="$base"
             cmake --build "${{ env.OUT_DIR }}/$base" -j$(nproc)
-            ${{ env.TARGET }}-strip --strip-all "${{ env.OUT_DIR }}/$base/$base"
-            ${{ env.TARGET }}-readelf -d "${{ env.OUT_DIR }}/$base/$base" | grep -q NEEDED \
-              && { echo "❌ $base has dynamic deps!"; exit 1; } \
-              || echo "✅ $base fully static"
+            "${{ env.TARGET }}"-strip --strip-all "${{ env.OUT_DIR }}/$base/$base"
+            "${{ env.TARGET }}"-readelf -d "${{ env.OUT_DIR }}/$base/$base" | grep -q NEEDED \
+              && { echo "\u274C $base has dynamic deps!"; exit 1; } \
+              || echo "\u2705 $base fully static"
           done
 
-      - name: 📦 Tar + zstd -9 compress
+      - name: "\U0001F4E6 Tar + zstd -9 compress"
+        id: pack
         run: |
-          cd ${{ env.OUT_DIR }}
+          cd "${{ env.OUT_DIR }}"
           tar --zstd -cf "${{ env.RELEASE_NAME }}.tar.zst" -9 *
           ls -lh "${{ env.RELEASE_NAME }}.tar.zst"
-          echo "archive=${{ env.OUT_DIR }}/${{ env.RELEASE_NAME }}.tar.zst" >> $GITHUB_OUTPUT
-        id: pack
+          echo "archive=${{ env.OUT_DIR }}/${{ env.RELEASE_NAME }}.tar.zst" >> "$GITHUB_OUTPUT"
 
-      - name: 🏷️ Create/Update Release (latest tag)
+      - name: "\U0001F3F7\uFE0F Create/Update Release (latest tag)"
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ env.RELEASE_NAME }} @ ${{ github.ref_name }}
+          tag_name: "${{ github.ref_name }}"
+          name: "${{ env.RELEASE_NAME }} @ ${{ github.ref_name }}"
           body: |
             **Android arm64 API 30 static binaries**
             - Compiled with NDK ${{ env.NDK_VERSION }}
             - `-Os -flto=auto -static -pie` + `--strip-all` + `--gc-sections`
             - Compressed: `tar --zstd -9`
             - Sources purged post-build
-          files: ${{ steps.pack.outputs.archive }}
+          files: "${{ steps.pack.outputs.archive }}"
           make_latest: true
           prerelease: false
           draft: false
 
-      - name: 💥 Nuke /src/ contents (clean workspace)
+      - name: "\U0001F4A5 Nuke /src/ contents (clean workspace)"
         if: always()
         run: |
           echo ">>> Purging ${{ env.SRC_DIR }}/ ..."
-          find ${{ env.SRC_DIR }} -mindepth 1 -delete
-          ls -la ${{ env.SRC_DIR }}/ || true
-          echo "✅ Source directory emptied"
+          find "${{ env.SRC_DIR }}" -mindepth 1 -delete
+          ls -la "${{ env.SRC_DIR }}/" || true
+          echo "\u2705 Source directory emptied"
