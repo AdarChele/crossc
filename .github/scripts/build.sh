@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IFS=',' read -ra SRC_FILES <<< "${{ steps.discover.outputs.files }}"
+IFS=',' read -ra SRC_FILES <<< "${DISCOVERED_FILES}"
 
 for src in "${SRC_FILES[@]}"; do
   base=$(basename "$src" .c)

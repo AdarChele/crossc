@@ -2,7 +2,6 @@ name: "Android Static arm64 \u2014 Build, Pack, Release, Purge"
 
 on:
   push:
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
