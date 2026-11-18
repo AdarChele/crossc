@@ -3,8 +3,19 @@ set -euo pipefail
 
 IFS=',' read -ra SRC_FILES <<< "${DISCOVERED_FILES}"
 
-# NDK clang path
-CLANG="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/$TARGET-clang"
+# NDK LLVM toolchain paths
+TOOLCHAIN_BIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+CLANG="$TOOLCHAIN_BIN/$TARGET-clang"
+STRIP="$TOOLCHAIN_BIN/llvm-strip"
+READELF="$TOOLCHAIN_BIN/llvm-readelf"
+
+# Verify tools exist
+for tool in "$CLANG" "$STRIP" "$READELF"; do
+  if [[ ! -x "$tool" ]]; then
+    echo "::error::Tool not found: $tool"
+    exit 1
+  fi
+done
 
 for src in "${SRC_FILES[@]}"; do
   base=$(basename "$src" .c)
@@ -16,14 +27,15 @@ for src in "${SRC_FILES[@]}"; do
     -target "$TARGET" \
     -Os -flto=auto \
     -ffunction-sections -fdata-sections \
-    -fPIE -static \
-    -Wl,--gc-sections -pie \
+    -fPIE \
+    -static-pie \
+    -Wl,--gc-sections \
     -o "$OUT_DIR/$base/$base" \
     "$src"
 
-  "$TARGET"-strip --strip-all "$OUT_DIR/$base/$base"
+  "$STRIP" --strip-all "$OUT_DIR/$base/$base"
 
-  if "$TARGET"-readelf -d "$OUT_DIR/$base/$base" | grep -q NEEDED; then
+  if "$READELF" -d "$OUT_DIR/$base/$base" | grep -q NEEDED; then
     echo "❌ $base has dynamic deps!"
     exit 1
   else
