@@ -30,6 +30,8 @@ for src in "${SRC_FILES[@]}"; do
     -fPIE \
     -static-pie \
     -Wl,--gc-sections \
+    -fno-stack-protector \
+    -Wl,-z,max-page-size=4096 \
     -o "$OUT_DIR/$base/$base" \
     "$src"
 
