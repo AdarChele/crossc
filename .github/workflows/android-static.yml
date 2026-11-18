@@ -31,14 +31,14 @@ jobs:
       - name: "\U0001F916 Setup Android SDK"
         uses: android-actions/setup-android@v4
         with:
-        cmdline-tools-version: "latest"
-        accept-android-sdk-licenses: true
-        log-accepted-android-sdk-licenses: false
+          cmdline-tools-version: "latest"
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
 
-       - name: "\U0001F527 Setup Android NDK"
-         uses: step-security/setup-ndk@v1
-         with:
-           ndk-version: "${{ env.NDK_VERSION }}"
+      - name: "\U0001F527 Setup Android NDK"
+        uses: step-security/setup-ndk@v1
+        with:
+          ndk-version: "${{ env.NDK_VERSION }}"
 
       - name: "\U0001F50D Discover sources"
         id: discover
